@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+{% block title %}Review Proposed Task — FlowPilot AI{% endblock %}
+
+{% block content %}
+<div class="mb-4">
+    <h2 class="h4 mb-1 fw-bold">Review AI-Proposed Task</h2>
+    <p class="text-muted mb-0">Verify and edit the extracted fields below. Nothing is saved until you click <strong>Approve Task</strong>.</p>
+</div>
+
+{% if extracted.is_demo %}
+<div class="alert alert-info">
+    <i class="bi bi-info-circle-fill me-1"></i>
+    <strong>Demo Mode:</strong> {{ extracted.demo_notice }}
+</div>
+{% else %}
+<div class="alert alert-success py-2 small">
+    <i class="bi bi-stars me-1"></i> Extracted by <strong>Google Gemini</strong> (Confidence: {{ (extracted.confidence * 100)|round(0)|int }}%)
+</div>
+{% endif %}
+
+{% if extracted.requires_clarification %}
+<div class="alert alert-warning">
+    <i class="bi bi-exclamation-triangle-fill me-1"></i>
+    <strong>Clarification Required:</strong> {{ extracted.clarification_question or 'Please resolve missing or ambiguous details (such as Due Date) before approving.' }}
+</div>
+{% endif %}
+
+<div class="row g-4">
+    <div class="col-lg-8">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body p-4">
+                <form action="{{ url_for('ai_processing.approve_task') }}" method="post">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <input type="hidden" name="review_id" value="{{ review_id }}">
+
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Title *</label>
+                        <input type="text" name="title" value="{{ extracted.title }}" class="form-control" required maxlength="200">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-semibold">Description</label>
+                        <textarea name="description" rows="3" class="form-control">{{ extracted.description }}</textarea>
+                    </div>
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Category</label>
+                            <select name="category" class="form-select">
+                                {% for c in categories %}
+                                <option value="{{ c }}" {% if extracted.category == c %}selected{% endif %}>{{ c }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Priority</label>
+                            <select name="priority" class="form-select">
+                                {% for p in priorities %}
+                                <option value="{{ p }}" {% if extracted.priority == p %}selected{% endif %}>{{ p }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Due Date</label>
+                            <input type="date" name="due_date" value="{{ extracted.due_date or '' }}" class="form-control">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-semibold">Assigned To</label>
+                            <input type="text" name="assigned_to" value="{{ extracted.assigned_to or '' }}" class="form-control" placeholder="Person or team">
+                        </div>
+                    </div>
+                    <div class="mb-4">
+                        <label class="form-label fw-semibold">Action Items (one per line)</label>
+                        <textarea name="action_items" rows="3" class="form-control">{{ '\n'.join(extracted.action_items) }}</textarea>
+                    </div>
+
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-success px-4">
+                            <i class="bi bi-check-circle me-1"></i> Approve Task
+                        </button>
+                    </div>
+                </form>
+
+                <form action="{{ url_for('ai_processing.reject_task') }}" method="post" class="mt-2">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button type="submit" class="btn btn-outline-danger">
+                        <i class="bi bi-x-circle me-1"></i> Reject &amp; Discard
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white py-3">
+                <h6 class="mb-0 fw-semibold">Original Request</h6>
+            </div>
+            <div class="card-body">
+                <p class="mb-0 text-muted" style="white-space: pre-wrap;">{{ original_request }}</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

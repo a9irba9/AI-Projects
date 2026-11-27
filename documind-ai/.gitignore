@@ -1,0 +1,35 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.venv/
+venv/
+env/
+
+# Environment & Secrets
+.env
+
+# Storage & Database
+storage/uploads/*
+!storage/uploads/.gitkeep
+storage/vector_index/*
+!storage/vector_index/.gitkeep
+*.db
+*.sqlite
+*.sqlite3
+instance/
+
+# Testing & Logs
+.pytest_cache/
+.coverage
+htmlcov/
+logs/
+*.log
+.tests/
+
+# IDE
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

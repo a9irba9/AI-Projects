@@ -1,0 +1,10 @@
+.venv/
+.env
+documind-ai/.venv/
+documind-ai/.env
+flowpilot-ai/.venv/
+flowpilot-ai/.env
+**/__pycache__/
+**/.pytest_cache/
+**/*.db
+**/*.sqlite

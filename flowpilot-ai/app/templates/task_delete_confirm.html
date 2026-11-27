@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block title %}Delete Task — FlowPilot AI{% endblock %}
+
+{% block content %}
+<div class="card border-0 shadow-sm mx-auto" style="max-width: 540px;">
+    <div class="card-body p-4">
+        <h4 class="fw-bold text-danger mb-3">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i>Confirm Task Deletion
+        </h4>
+        <p>Are you sure you want to permanently delete this task?</p>
+        <div class="bg-light p-3 rounded mb-4">
+            <div class="fw-bold">{{ task.title }}</div>
+            <div class="small text-muted">{{ task.category }} · {{ task.priority }} · {{ task.status }}</div>
+        </div>
+        <form method="post" class="d-flex gap-2">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit" class="btn btn-danger">Yes, Delete Task</button>
+            <a href="{{ url_for('tasks.task_detail', task_id=task.id) }}" class="btn btn-outline-secondary">Cancel</a>
+        </form>
+    </div>
+</div>
+{% endblock %}

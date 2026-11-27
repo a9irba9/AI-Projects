@@ -1,0 +1,131 @@
+{% extends "base.html" %}
+{% block title %}Dashboard — FlowPilot AI{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="h4 mb-1 fw-bold">Dashboard</h2>
+        <p class="text-muted mb-0">Business workflow overview and task status</p>
+    </div>
+</div>
+
+<!-- KPI Cards -->
+<div class="row g-3 mb-4">
+    <div class="col-6 col-md-4 col-xl-2">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body">
+                <div class="text-muted small fw-semibold text-uppercase">Total Tasks</div>
+                <div class="fs-3 fw-bold mt-1">{{ stats.total }}</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-4 col-xl-2">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body">
+                <div class="text-muted small fw-semibold text-uppercase">Pending</div>
+                <div class="fs-3 fw-bold text-secondary mt-1">{{ stats.pending }}</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-4 col-xl-2">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body">
+                <div class="text-muted small fw-semibold text-uppercase">In Progress</div>
+                <div class="fs-3 fw-bold text-primary mt-1">{{ stats.in_progress }}</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-4 col-xl-2">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body">
+                <div class="text-muted small fw-semibold text-uppercase">Completed</div>
+                <div class="fs-3 fw-bold text-success mt-1">{{ stats.completed }}</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-4 col-xl-2">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body">
+                <div class="text-muted small fw-semibold text-uppercase">Overdue</div>
+                <div class="fs-3 fw-bold text-danger mt-1">{{ stats.overdue }}</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-4 col-xl-2">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body">
+                <div class="text-muted small fw-semibold text-uppercase">High / Critical</div>
+                <div class="fs-3 fw-bold text-warning mt-1">{{ stats.high_priority }}</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Tasks -->
+<div class="card border-0 shadow-sm">
+    <div class="card-header bg-white py-3">
+        <h5 class="card-title mb-0 fw-semibold">Recent Tasks</h5>
+    </div>
+    <div class="card-body p-0">
+        {% if recent_tasks %}
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Title</th>
+                        <th>Category</th>
+                        <th>Priority</th>
+                        <th>Due Date</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for task in recent_tasks %}
+                    <tr>
+                        <td class="fw-medium">{{ task.title }}</td>
+                        <td><span class="badge bg-light text-dark border">{{ task.category }}</span></td>
+                        <td>
+                            <span class="badge bg-{{ 'danger' if task.priority in ['High', 'Critical'] else ('warning text-dark' if task.priority == 'Medium' else 'secondary') }}">
+                                {{ task.priority }}
+                            </span>
+                        </td>
+                        <td class="small text-muted">{{ task.due_date.isoformat() if task.due_date else '—' }}</td>
+                        <td><span class="badge bg-info text-dark">{{ task.status }}</span></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="p-4 text-center text-muted">
+            No tasks created yet.
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Recent Activity -->
+<div class="card border-0 shadow-sm mt-4">
+    <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+        <h5 class="card-title mb-0 fw-semibold">Recent Activity</h5>
+        <a href="{{ url_for('exports.activity_history') }}" class="btn btn-sm btn-outline-secondary">View All</a>
+    </div>
+    <div class="card-body p-0">
+        {% if recent_activity %}
+        <ul class="list-group list-group-flush">
+            {% for log in recent_activity %}
+            <li class="list-group-item d-flex justify-content-between align-items-center">
+                <div>
+                    <span class="badge bg-secondary me-2">{{ log.event_type }}</span>
+                    <span class="small">{{ log.details }}</span>
+                </div>
+                <span class="small text-muted">{{ log.created_at.strftime('%Y-%m-%d %H:%M') }}</span>
+            </li>
+            {% endfor %}
+        </ul>
+        {% else %}
+        <div class="p-4 text-center text-muted">No activity recorded yet.</div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

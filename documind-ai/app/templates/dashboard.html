@@ -1,0 +1,146 @@
+{% extends "base.html" %}
+{% block title %}Dashboard — DocuMind AI{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="h4 mb-1 fw-bold">Dashboard</h2>
+        <p class="text-muted mb-0">Overview of uploaded business documents and processing status</p>
+    </div>
+</div>
+
+<!-- Metrics Row -->
+<div class="row g-3 mb-4">
+    <div class="col-sm-6 col-xl-3">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body">
+                <div class="text-muted small fw-semibold text-uppercase">Total Documents</div>
+                <div class="fs-2 fw-bold mt-1">{{ stats.total_docs }}</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body">
+                <div class="text-muted small fw-semibold text-uppercase">Processed</div>
+                <div class="fs-2 fw-bold text-success mt-1">{{ stats.processed_docs }}</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body">
+                <div class="text-muted small fw-semibold text-uppercase">Failed</div>
+                <div class="fs-2 fw-bold text-danger mt-1">{{ stats.failed_docs }}</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body">
+                <div class="text-muted small fw-semibold text-uppercase">Extracted Invoices</div>
+                <div class="fs-2 fw-bold text-primary mt-1">{{ stats.total_invoices }}</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Charts Row -->
+<div class="row g-3 mb-4">
+    <div class="col-md-6">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-header bg-white py-3">
+                <h6 class="card-title mb-0 fw-semibold">Documents by Category</h6>
+            </div>
+            <div class="card-body">
+                <canvas id="categoryChart" height="180"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-header bg-white py-3">
+                <h6 class="card-title mb-0 fw-semibold">Processing Status</h6>
+            </div>
+            <div class="card-body">
+                <canvas id="statusChart" height="180"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Uploads -->
+<div class="card border-0 shadow-sm">
+    <div class="card-header bg-white py-3">
+        <h5 class="card-title mb-0 fw-semibold">Recent Uploads</h5>
+    </div>
+    <div class="card-body p-0">
+        {% if recent_docs %}
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Filename</th>
+                        <th>Type</th>
+                        <th>Status</th>
+                        <th>Uploaded</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for doc in recent_docs %}
+                    <tr>
+                        <td class="fw-medium">{{ doc.original_filename }}</td>
+                        <td>{{ doc.document_type or 'Pending' }}</td>
+                        <td>
+                            <span class="badge bg-{{ 'success' if doc.processing_status == 'completed' else ('danger' if doc.processing_status == 'failed' else 'secondary') }}">
+                                {{ doc.processing_status }}
+                            </span>
+                        </td>
+                        <td class="text-muted small">{{ doc.upload_timestamp.strftime('%Y-%m-%d %H:%M') }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="p-4 text-center text-muted">
+            No documents uploaded yet.
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<script>
+const catData = {{ category_counts|tojson }};
+const statusData = {{ status_counts|tojson }};
+
+new Chart(document.getElementById('categoryChart'), {
+    type: 'bar',
+    data: {
+        labels: Object.keys(catData).length ? Object.keys(catData) : ['No Data'],
+        datasets: [{
+            label: 'Documents',
+            data: Object.keys(catData).length ? Object.values(catData) : [0],
+            backgroundColor: '#0d6efd',
+            borderRadius: 4
+        }]
+    },
+    options: { plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } }
+});
+
+new Chart(document.getElementById('statusChart'), {
+    type: 'doughnut',
+    data: {
+        labels: Object.keys(statusData),
+        datasets: [{
+            data: Object.values(statusData),
+            backgroundColor: ['#198754', '#dc3545', '#6c757d']
+        }]
+    },
+    options: { plugins: { legend: { position: 'bottom' } } }
+});
+</script>
+{% endblock %}

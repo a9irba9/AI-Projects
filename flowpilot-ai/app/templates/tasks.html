@@ -1,0 +1,126 @@
+{% extends "base.html" %}
+{% block title %}All Tasks — FlowPilot AI{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="h4 mb-1 fw-bold">All Tasks</h2>
+        <p class="text-muted mb-0">Search, filter, sort, and manage workflow tasks</p>
+    </div>
+    <div class="d-flex gap-2">
+        <a href="{{ url_for('exports.export_csv', q=search, status=status, priority=priority, category=category, sort=sort_by) }}" class="btn btn-outline-success">
+            <i class="bi bi-file-earmark-spreadsheet me-1"></i> Export CSV
+        </a>
+        <a href="{{ url_for('tasks.new_task') }}" class="btn btn-primary">
+            <i class="bi bi-plus-lg me-1"></i> New Task
+        </a>
+    </div>
+</div>
+
+<!-- Search & Filters -->
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-body">
+        <form method="get" action="{{ url_for('tasks.list_tasks') }}" class="row g-2 align-items-end">
+            <div class="col-md-3">
+                <label class="form-label small fw-semibold">Search</label>
+                <input type="text" name="q" value="{{ search }}" class="form-control form-control-sm" placeholder="Title or description...">
+            </div>
+            <div class="col-md-2">
+                <label class="form-label small fw-semibold">Status</label>
+                <select name="status" class="form-select form-select-sm">
+                    <option value="">All Statuses</option>
+                    {% for s in statuses %}
+                    <option value="{{ s }}" {% if status == s %}selected{% endif %}>{{ s }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label small fw-semibold">Priority</label>
+                <select name="priority" class="form-select form-select-sm">
+                    <option value="">All Priorities</option>
+                    {% for p in priorities %}
+                    <option value="{{ p }}" {% if priority == p %}selected{% endif %}>{{ p }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label small fw-semibold">Category</label>
+                <select name="category" class="form-select form-select-sm">
+                    <option value="">All Categories</option>
+                    {% for c in categories %}
+                    <option value="{{ c }}" {% if category == c %}selected{% endif %}>{{ c }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label small fw-semibold">Sort By</label>
+                <select name="sort" class="form-select form-select-sm">
+                    <option value="created_desc" {% if sort_by == 'created_desc' %}selected{% endif %}>Newest First</option>
+                    <option value="created_asc" {% if sort_by == 'created_asc' %}selected{% endif %}>Oldest First</option>
+                    <option value="due_asc" {% if sort_by == 'due_asc' %}selected{% endif %}>Due Date (Earliest)</option>
+                    <option value="due_desc" {% if sort_by == 'due_desc' %}selected{% endif %}>Due Date (Latest)</option>
+                </select>
+            </div>
+            <div class="col-md-1 d-flex gap-1">
+                <button type="submit" class="btn btn-sm btn-primary w-100">Apply</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Tasks Table -->
+<div class="card border-0 shadow-sm">
+    <div class="card-body p-0">
+        {% if tasks %}
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Title</th>
+                        <th>Category</th>
+                        <th>Priority</th>
+                        <th>Assigned To</th>
+                        <th>Due Date</th>
+                        <th>Status</th>
+                        <th class="text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for task in tasks %}
+                    <tr>
+                        <td>
+                            <a href="{{ url_for('tasks.task_detail', task_id=task.id) }}" class="fw-medium text-decoration-none">
+                                {{ task.title }}
+                            </a>
+                        </td>
+                        <td><span class="badge bg-light text-dark border">{{ task.category }}</span></td>
+                        <td>
+                            <span class="badge bg-{{ 'danger' if task.priority in ['High', 'Critical'] else ('warning text-dark' if task.priority == 'Medium' else 'secondary') }}">
+                                {{ task.priority }}
+                            </span>
+                        </td>
+                        <td class="small">{{ task.assigned_to or '—' }}</td>
+                        <td class="small text-muted">{{ task.due_date.isoformat() if task.due_date else '—' }}</td>
+                        <td>
+                            <span class="badge bg-{{ 'success' if task.status == 'Completed' else ('primary' if task.status == 'In Progress' else ('dark' if task.status == 'Cancelled' else 'secondary')) }}">
+                                {{ task.status }}
+                            </span>
+                        </td>
+                        <td class="text-end">
+                            <a href="{{ url_for('tasks.task_detail', task_id=task.id) }}" class="btn btn-sm btn-outline-primary">View</a>
+                            <a href="{{ url_for('tasks.edit_task', task_id=task.id) }}" class="btn btn-sm btn-outline-secondary">Edit</a>
+                            <a href="{{ url_for('tasks.remove_task', task_id=task.id) }}" class="btn btn-sm btn-outline-danger">Delete</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="p-4 text-center text-muted">
+            No tasks match your criteria. <a href="{{ url_for('tasks.new_task') }}">Create a new task</a>.
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

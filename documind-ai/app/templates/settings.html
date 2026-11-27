@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block title %}Settings — DocuMind AI{% endblock %}
+
+{% block content %}
+<div class="mb-4">
+    <h2 class="h4 mb-1 fw-bold">Settings &amp; System Status</h2>
+    <p class="text-muted mb-0">Runtime configuration and dependency health</p>
+</div>
+
+<div class="card border-0 shadow-sm">
+    <div class="card-body">
+        <table class="table table-borderless mb-0">
+            <tbody>
+                <tr>
+                    <th style="width: 240px;">LLM Provider</th>
+                    <td><span class="badge bg-primary">{{ config_info.llm_provider }}</span></td>
+                </tr>
+                <tr>
+                    <th>Gemini Model</th>
+                    <td><code>{{ config_info.gemini_model }}</code></td>
+                </tr>
+                <tr>
+                    <th>Embedding Model</th>
+                    <td><code>{{ config_info.embedding_model }}</code></td>
+                </tr>
+                <tr>
+                    <th>API Credentials</th>
+                    <td>
+                        {% if config_info.key_configured %}
+                        <span class="badge bg-success">Configured</span>
+                        {% else %}
+                        <span class="badge bg-warning text-dark">Not Configured (set GEMINI_API_KEY in .env)</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                <tr>
+                    <th>Tesseract OCR</th>
+                    <td>
+                        {% if config_info.ocr_available %}
+                        <span class="badge bg-success">Available</span>
+                        {% else %}
+                        <span class="badge bg-secondary">Not Installed (optional)</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                <tr>
+                    <th>RAG Chunk Size / Overlap</th>
+                    <td>{{ config_info.chunk_size }} chars / {{ config_info.chunk_overlap }} chars (Top-K: {{ config_info.top_k }})</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

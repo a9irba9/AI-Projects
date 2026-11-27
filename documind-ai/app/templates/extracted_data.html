@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block title %}Extracted Data — DocuMind AI{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2 class="h4 mb-1 fw-bold">Extracted Data</h2>
+        <p class="text-muted mb-0">Structured business information extracted from uploaded documents</p>
+    </div>
+    <a href="{{ url_for('exports.export_csv') }}" class="btn btn-success">
+        <i class="bi bi-file-earmark-spreadsheet me-1"></i> Export CSV
+    </a>
+</div>
+
+<div class="card border-0 shadow-sm">
+    <div class="card-body p-0">
+        {% if rows %}
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Document</th>
+                        <th>Type</th>
+                        <th>Supplier</th>
+                        <th>Invoice #</th>
+                        <th>Date</th>
+                        <th>Due Date</th>
+                        <th>Total</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for r in rows %}
+                    <tr>
+                        <td>
+                            <a href="{{ url_for('documents.document_detail', doc_id=r.document_id) }}" class="fw-medium text-decoration-none">
+                                {{ r.document_name }}
+                            </a>
+                        </td>
+                        <td>{{ r.document_type or '—' }}</td>
+                        <td>{{ r.supplier or '—' }}</td>
+                        <td>{{ r.invoice_number or '—' }}</td>
+                        <td>{{ r.document_date or '—' }}</td>
+                        <td>{{ r.due_date or '—' }}</td>
+                        <td class="fw-semibold">{{ (r.currency ~ ' ' ~ r.total_amount).strip() if r.total_amount else '—' }}</td>
+                        <td>
+                            <span class="badge bg-{{ 'success' if r.processing_status == 'completed' else 'secondary' }}">
+                                {{ r.processing_status }}
+                            </span>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="p-4 text-center text-muted">No extracted data available yet.</div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

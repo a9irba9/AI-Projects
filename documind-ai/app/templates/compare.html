@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% block title %}Compare Documents — DocuMind AI{% endblock %}
+
+{% block content %}
+<div class="mb-4">
+    <h2 class="h4 mb-1 fw-bold">Side-by-Side Document Comparison</h2>
+    <p class="text-muted mb-0">Select two uploaded documents to compare extracted business fields</p>
+</div>
+
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-body">
+        <form method="post" class="row g-3 align-items-end">
+            <div class="col-md-5">
+                <label class="form-label small fw-semibold">Document 1</label>
+                <select name="doc1_id" class="form-select" required>
+                    <option value="">Select first document...</option>
+                    {% for d in all_docs %}
+                    <option value="{{ d.id }}" {% if doc1 and doc1.id == d.id %}selected{% endif %}>{{ d.original_filename }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-5">
+                <label class="form-label small fw-semibold">Document 2</label>
+                <select name="doc2_id" class="form-select" required>
+                    <option value="">Select second document...</option>
+                    {% for d in all_docs %}
+                    <option value="{{ d.id }}" {% if doc2 and doc2.id == d.id %}selected{% endif %}>{{ d.original_filename }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-primary w-100">Compare</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% if doc1 and doc2 %}
+{% if ai_summary %}
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-header bg-white py-3">
+        <h6 class="mb-0 fw-semibold"><i class="bi bi-stars text-primary me-1"></i> AI Comparison Summary</h6>
+    </div>
+    <div class="card-body" style="white-space: pre-wrap;">{{ ai_summary }}</div>
+</div>
+{% endif %}
+
+<div class="card border-0 shadow-sm">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-bordered align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th style="width: 220px;">Field</th>
+                        <th>{{ doc1.original_filename }}</th>
+                        <th>{{ doc2.original_filename }}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for k in compare_keys %}
+                    <tr>
+                        <td class="fw-semibold text-uppercase small text-muted">{{ k.replace('_', ' ') }}</td>
+                        <td>{{ fields1.get(k) or '—' }}</td>
+                        <td>{{ fields2.get(k) or '—' }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

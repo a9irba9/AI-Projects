@@ -1,0 +1,161 @@
+{% extends "base.html" %}
+{% block title %}AI Assistant — DocuMind AI{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <div>
+        <h2 class="h4 mb-1 fw-bold">AI Assistant</h2>
+        <p class="text-muted mb-0">Ask questions grounded in your uploaded business documents</p>
+    </div>
+    <button id="clearBtn" class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-trash me-1"></i> Clear Conversation
+    </button>
+</div>
+
+<div class="card border-0 shadow-sm">
+    <div id="chatBox" class="card-body overflow-auto" style="height: 500px; background-color: #f8f9fa;">
+        {% if not history %}
+        <div id="emptyState" class="text-center text-muted mt-5">
+            <i class="bi bi-chat-dots fs-1 d-block mb-2"></i>
+            <p class="mb-1 fw-medium">Ask a question about your uploaded documents</p>
+            <p class="small">Example: "What is the total amount of invoice INV-001?" or "When is payment due?"</p>
+        </div>
+        {% else %}
+            {% for msg in history %}
+            <div class="mb-3 d-flex flex-column {{ 'align-items-end' if msg.role == 'user' else 'align-items-start' }}">
+                <div class="p-3 rounded shadow-sm {{ 'bg-primary text-white' if msg.role == 'user' else 'bg-white border' }}" style="max-width: 80%;">
+                    <div class="small fw-bold mb-1">{{ 'You' if msg.role == 'user' else 'DocuMind AI (AI-Generated)' }}</div>
+                    <div style="white-space: pre-wrap;">{{ msg.content }}</div>
+                    {% if msg.sources %}
+                    <hr class="my-2">
+                    <div class="small fw-semibold text-muted mb-1">Sources:</div>
+                    <ul class="list-unstyled mb-0 small">
+                        {% for src in msg.sources %}
+                        <li class="mb-1">
+                            <span class="badge bg-light text-dark border">{{ src.document_name }} — Page {{ src.page_number }}</span>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        {% endif %}
+    </div>
+    <div class="card-footer bg-white p-3">
+        <form id="chatForm" class="d-flex gap-2 flex-wrap">
+            <select id="languageSelect" class="form-select" style="max-width: 210px;">
+                <option value="Auto (match question)">Language: Auto</option>
+                <option value="English">English</option>
+                <option value="Japanese">Japanese (日本語)</option>
+                <option value="Spanish">Spanish</option>
+                <option value="French">French</option>
+                <option value="German">German</option>
+                <option value="Chinese">Chinese</option>
+                <option value="Hindi">Hindi</option>
+                <option value="Bengali">Bengali</option>
+            </select>
+            <input type="text" id="questionInput" class="form-control" style="flex: 1; min-width: 220px;" placeholder="Ask a question in any language..." required>
+            <button type="submit" id="sendBtn" class="btn btn-primary px-4">
+                <i class="bi bi-send me-1"></i> Ask
+            </button>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const chatBox = document.getElementById('chatBox');
+const chatForm = document.getElementById('chatForm');
+const questionInput = document.getElementById('questionInput');
+const sendBtn = document.getElementById('sendBtn');
+const clearBtn = document.getElementById('clearBtn');
+
+function appendMessage(role, content, sources = []) {
+    const emptyState = document.getElementById('emptyState');
+    if (emptyState) emptyState.remove();
+
+    const wrapper = document.createElement('div');
+    wrapper.className = `mb-3 d-flex flex-column ${role === 'user' ? 'align-items-end' : 'align-items-start'}`;
+
+    const bubble = document.createElement('div');
+    bubble.className = `p-3 rounded shadow-sm ${role === 'user' ? 'bg-primary text-white' : 'bg-white border'}`;
+    bubble.style.maxWidth = '80%';
+
+    const header = document.createElement('div');
+    header.className = 'small fw-bold mb-1';
+    header.textContent = role === 'user' ? 'You' : 'DocuMind AI (AI-Generated)';
+    bubble.appendChild(header);
+
+    const body = document.createElement('div');
+    body.style.whiteSpace = 'pre-wrap';
+    body.textContent = content;
+    bubble.appendChild(body);
+
+    if (sources && sources.length > 0) {
+        const hr = document.createElement('hr');
+        hr.className = 'my-2';
+        bubble.appendChild(hr);
+
+        const srcTitle = document.createElement('div');
+        srcTitle.className = 'small fw-semibold text-muted mb-1';
+        srcTitle.textContent = 'Sources:';
+        bubble.appendChild(srcTitle);
+
+        const ul = document.createElement('ul');
+        ul.className = 'list-unstyled mb-0 small';
+        sources.forEach(s => {
+            const li = document.createElement('li');
+            li.className = 'mb-1';
+            const badge = document.createElement('span');
+            badge.className = 'badge bg-light text-dark border';
+            badge.textContent = `${s.document_name} — Page ${s.page_number}`;
+            li.appendChild(badge);
+            ul.appendChild(li);
+        });
+        bubble.appendChild(ul);
+    }
+
+    wrapper.appendChild(bubble);
+    chatBox.appendChild(wrapper);
+    chatBox.scrollTop = chatBox.scrollHeight;
+}
+
+chatForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const question = questionInput.value.trim();
+    if (!question) return;
+
+    appendMessage('user', question);
+    questionInput.value = '';
+    sendBtn.disabled = true;
+    sendBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Thinking...';
+
+    try {
+        const response_language = document.getElementById('languageSelect').value;
+        const res = await fetch('{{ url_for("assistant.ask") }}', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({question, response_language})
+        });
+        const data = await res.json();
+        if (!res.ok) {
+            appendMessage('assistant', data.error || 'An error occurred.');
+        } else {
+            appendMessage('assistant', data.answer, data.sources || []);
+        }
+    } catch (err) {
+        appendMessage('assistant', 'Network error while contacting the server.');
+    } finally {
+        sendBtn.disabled = false;
+        sendBtn.innerHTML = '<i class="bi bi-send me-1"></i> Ask';
+    }
+});
+
+clearBtn.addEventListener('click', async () => {
+    await fetch('{{ url_for("assistant.clear_chat") }}', {method: 'POST'});
+    location.reload();
+});
+</script>
+{% endblock %}

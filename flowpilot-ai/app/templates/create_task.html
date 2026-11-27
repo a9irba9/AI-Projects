@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block title %}Create Task (AI) — FlowPilot AI{% endblock %}
+
+{% block content %}
+<div class="mb-4">
+    <h2 class="h4 mb-1 fw-bold">Create Task with AI</h2>
+    <p class="text-muted mb-0">Describe a business request in plain language. FlowPilot AI will extract a structured task for your review.</p>
+</div>
+
+<div class="card border-0 shadow-sm">
+    <div class="card-body p-4">
+        <form id="aiForm" action="{{ url_for('ai_processing.process_request') }}" method="post">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div class="mb-3">
+                <label for="user_request" class="form-label fw-semibold">Business Request</label>
+                <textarea id="user_request" name="user_request" rows="4" class="form-control" placeholder="e.g., The delivery to ABC Manufacturing is delayed. Follow up with the supplier tomorrow and mark it as high priority." required></textarea>
+            </div>
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                <button type="button" id="sampleBtn" class="btn btn-outline-secondary btn-sm">
+                    <i class="bi bi-lightbulb me-1"></i> Fill Example Request
+                </button>
+                <div class="d-flex gap-2">
+                    <button type="submit" formaction="{{ url_for('ai_processing.process_batch_request') }}" class="btn btn-outline-primary">
+                        <i class="bi bi-list-check me-1"></i> Extract Multiple Tasks
+                    </button>
+                    <button type="submit" id="submitBtn" class="btn btn-primary px-4">
+                        <i class="bi bi-magic me-1"></i> Process Single Task
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.getElementById('sampleBtn').addEventListener('click', () => {
+    document.getElementById('user_request').value =
+        'The delivery to ABC Manufacturing is delayed. Follow up with the supplier tomorrow and mark it as high priority.';
+});
+
+document.getElementById('aiForm').addEventListener('submit', () => {
+    const btn = document.getElementById('submitBtn');
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Processing...';
+});
+</script>
+{% endblock %}

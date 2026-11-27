@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+{% block title %}Activity History — FlowPilot AI{% endblock %}
+
+{% block content %}
+<div class="mb-4">
+    <h2 class="h4 mb-1 fw-bold">Activity History</h2>
+    <p class="text-muted mb-0">Audit log of AI requests, approvals, edits, status changes, and deletions</p>
+</div>
+
+<!-- Filters -->
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-body">
+        <form method="get" action="{{ url_for('exports.activity_history') }}" class="row g-2 align-items-end">
+            <div class="col-md-4">
+                <label class="form-label small fw-semibold">Event Type</label>
+                <select name="event_type" class="form-select form-select-sm">
+                    <option value="">All Events</option>
+                    {% for et in event_types %}
+                    <option value="{{ et }}" {% if event_type == et %}selected{% endif %}>{{ et }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label small fw-semibold">From Date</label>
+                <input type="date" name="start_date" value="{{ start_date }}" class="form-control form-control-sm">
+            </div>
+            <div class="col-md-3">
+                <label class="form-label small fw-semibold">To Date</label>
+                <input type="date" name="end_date" value="{{ end_date }}" class="form-control form-control-sm">
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-sm btn-primary w-100">Filter</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Activity Table -->
+<div class="card border-0 shadow-sm">
+    <div class="card-body p-0">
+        {% if logs %}
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Event</th>
+                        <th>Task ID</th>
+                        <th>Task Title</th>
+                        <th>Details</th>
+                        <th>Timestamp (UTC)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for log in logs %}
+                    <tr>
+                        <td><span class="badge bg-secondary">{{ log.event_type }}</span></td>
+                        <td class="small text-muted">{{ log.task_id if log.task_id else '—' }}</td>
+                        <td class="fw-medium">
+                            {% if log.task %}
+                            <a href="{{ url_for('tasks.task_detail', task_id=log.task.id) }}" class="text-decoration-none">{{ log.task.title }}</a>
+                            {% elif log.event_type == 'Task deleted' %}
+                            <span class="text-muted fst-italic">(Deleted task)</span>
+                            {% else %}
+                            <span class="text-muted">—</span>
+                            {% endif %}
+                        </td>
+                        <td class="small">{{ log.details }}</td>
+                        <td class="small text-muted">{{ log.created_at.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        {% if pagination.pages > 1 %}
+        <div class="p-3 d-flex justify-content-between align-items-center border-top">
+            <span class="small text-muted">Page {{ pagination.page }} of {{ pagination.pages }}</span>
+            <div class="btn-group btn-group-sm">
+                {% if pagination.has_prev %}
+                <a class="btn btn-outline-secondary" href="{{ url_for('exports.activity_history', page=pagination.prev_num, event_type=event_type, start_date=start_date, end_date=end_date) }}">Previous</a>
+                {% endif %}
+                {% if pagination.has_next %}
+                <a class="btn btn-outline-secondary" href="{{ url_for('exports.activity_history', page=pagination.next_num, event_type=event_type, start_date=start_date, end_date=end_date) }}">Next</a>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+        {% else %}
+        <div class="p-4 text-center text-muted">No activity recorded yet.</div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
